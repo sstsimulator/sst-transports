@@ -377,9 +377,15 @@ struct RecvQueue {
   }
 
   bool matches(FabricMessage* msg, uint32_t addr, uint64_t tag, uint64_t ignore){
-    bool tag_match = (msg->tag() & ~ignore) == (tag & ~ignore);
+	bool tag_match = (msg->tag() & ~ignore) == (tag & ~ignore);
     //either a specific addr or UNSPEC (which is all 1s)
     bool src_match = (msg->sender() & addr) == msg->sender();
+    bool unspec_addr = (addr & 0xffffffff);
+    //if it is a specific addr, and doesn't match with sender exactly, return false
+    if( !unspec_addr && addr != msg->sender() && src_match && tag_match)
+    {
+      return false;
+    }
     return tag_match && src_match;
   }
 
